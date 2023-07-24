@@ -1,0 +1,13 @@
+to configure push notifications on mac
+
+open xcode -> open existing proj or file -> go to flutter proj folder -> ios -> open runner.xcworkspace
+enable push notifications :
+https://help.apple.com/xcode/mac/current/#/devdfd3d04a1
+select runner proj in xcode 
+    under signings and capabilities
+        + cap -> sear push -> add push notifications
+        need to assign dev Account
+        add also background fetch  in background modes capability
+    go to apple dev account,
+    under certs go to keys add new key choose apple push notifications service
+    then upload cert key file to project settings/ cloud messaging

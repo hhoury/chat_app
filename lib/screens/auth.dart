@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:chat_app/widgets/user_image_picker.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -17,13 +18,15 @@ class AuthScreen extends StatefulWidget {
 class _AuthScreenState extends State<AuthScreen> {
   final _formKey = GlobalKey<FormState>();
   var _enteredEmail = '';
+  var _enteredUsername = '';
   var _enteredPassword = '';
   File? _selectedImage;
   var _isLogin = true;
   var _isAuthenticating = false;
+
   void _submit() async {
     final isValid = _formKey.currentState!.validate();
-    if (!isValid || _isLogin && _selectedImage == null) {
+    if (!isValid || !_isLogin && _selectedImage == null) {
       return;
     }
     _formKey.currentState!.save();
@@ -43,8 +46,13 @@ class _AuthScreenState extends State<AuthScreen> {
             .child('${userCredentials.user!.uid}.jpg');
         await storageRef.putFile(_selectedImage!);
         final imageUrl = await storageRef.getDownloadURL();
-        setState(() {
-          _isAuthenticating = false;
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userCredentials.user!.uid)
+            .set({
+          'username': _enteredUsername,
+          'email': _enteredEmail,
+          'image_url': imageUrl,
         });
       }
     } on FirebaseAuthException catch (err) {
@@ -109,6 +117,23 @@ class _AuthScreenState extends State<AuthScreen> {
                                 _enteredEmail = newValue!;
                               },
                             ),
+                            if (!_isLogin)
+                              TextFormField(
+                                decoration: const InputDecoration(
+                                    labelText: 'Username'),
+                                enableSuggestions: false,
+                                validator: (value) {
+                                  if (value == null ||
+                                      value.isEmpty ||
+                                      value.trim().length < 4) {
+                                    return 'Please Enter a valid Username (at least 4 characters)';
+                                  }
+                                  return null;
+                                },
+                                onSaved: (newValue) {
+                                  _enteredUsername = newValue!;
+                                },
+                              ),
                             TextFormField(
                               validator: (value) {
                                 if (value == null ||
